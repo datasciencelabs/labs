@@ -21,6 +21,7 @@ Now let's use data to answer the questions. There are a number of datasets avail
 ```{r load libraries,message=FALSE,echo=TRUE}
 library(dplyr)
 library(readr)
+library(tidyr)
 child_mortality <-read_csv("http://spreadsheets.google.com/pub?key=0ArfEDsV3bBwCcGhBd2NOQVZ1eWowNVpSNjl1c3lRSWc&output=csv")
 ```
 
@@ -72,7 +73,7 @@ for(i in seq_along(tables) ) tables[[i]] <-fix_table(tables[[i]], names(tables)[
 ##Join into one large table
 dat <- Reduce(full_join, tables)
 
-rm(tables); gc()
+rm(tables); gc(verbose = FALSE)
 ```
 
 We also want to add a column with the continent. In a separate file we have downloaded this information and created the following table:
@@ -203,14 +204,14 @@ p + geom_density(aes(weight=population/sum(population)))
 An interpretation of this plot is that there are two clusters of countries: those were the average person earns about $1 dollar a day, and those where they earn about $75. To see what regions these countries are from we can make a density for each.
 
 
-```{r}
+```{r, warning=FALSE}
 p + geom_density(aes(weight=population/sum(population)),
                  alpha=0.3) +
   aes(fill=group) 
 ```
 
-```{r}
-years <- seq(1970,2010,10)
+```{r, warning=FALSE}
+years <- c(1970, 2000, 2010)
 filter(dat, year%in%years & !is.na(gdp) 
             & !is.na(population) & !is.na(group)) %>%
   mutate(group = ifelse(country%in%opec, "OPEC", group)) %>%
@@ -257,7 +258,7 @@ mutate(dat, group = ifelse(country%in%opec, "OPEC", group),
   xlab("GDP per capita") +
   ylab("Proportion Child Survival") +
   ggtitle("2010") +
-  scale_size_continuous(range = c(5, 18)) + 
+  scale_size_continuous(range = c(2, 10)) + 
   scale_y_continuous(trans=scales::logit_trans(),
                      breaks=c(.95,.97,.99,.995,.997),
                      limits=c(0.79,.998))+
@@ -266,7 +267,7 @@ mutate(dat, group = ifelse(country%in%opec, "OPEC", group),
                      breaks=c(500,5000,50000))
 ```
 
-However, once we acutally show all the countries in these groups, we see that there is a large amount of variability. We highlight two countries in each group.
+However, once we acutally show all the countries in these groups, we see that there is a large amount of variability. We highlight two countries in each of the four groups.
 
 
 ```{r}
@@ -295,18 +296,3 @@ ggplot(dat2, aes(income,y=survival)) +
             aes(label=country,color=group),  nudge_y = 0.1, 
             show.legend  = FALSE )
 ```
-
-# Within country variation
-
-Finally, we will show that even within country we have quite a bit of variation. We need to create another dataset which has the within-country income quantiles.
-
-```{r}
-#loading income share by population quintiles
-urls <- c(
-   "http://spreadsheets.google.com/pub?key=pyj6tScZqmEdIyrBS31XAaw&output=csv",
-   "http://spreadsheets.google.com/pub?key=tXRyZGCfHsWMmr53VFxrqTw&output=csv",
-    "http://spreadsheets.google.com/pub?key=t_-14NtXH6xZX48xHG75z5w&output=csv",
-   "http://spreadsheets.google.com/pub?key=twSOUYrIFh2W2snDUt7VaQg&output=csv","http://spreadsheets.google.com/pub?key=tLnCxItXzRSu9gH-5PyEFDw&output=csv")
-
-```
-
